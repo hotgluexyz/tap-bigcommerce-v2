@@ -29,10 +29,16 @@ class TapBigcommerce(Tap):
 
     config_jsonschema = th.PropertiesList(
         th.Property(
-            "auth_token",
+            "access_token",
             th.StringType,
             required=True,
             description="The token to authenticate against the API service",
+        ),
+        th.Property(
+            "store_hash",
+            th.StringType,
+            required=True,
+            description="Store Hash",
         ),
         th.Property(
             "start_date",

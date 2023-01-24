@@ -15,7 +15,7 @@ class BigcommerceStream(RESTStream):
     @property
     def url_base(self) -> str:
         """Return the API URL root, configurable via tap settings."""
-        hash = self.config.get("hash_token")
+        hash = self.config.get("store_hash")
         return f"https://api.bigcommerce.com/stores/{hash}"
 
     records_jsonpath = "$[*]"
@@ -26,7 +26,7 @@ class BigcommerceStream(RESTStream):
         return APIKeyAuthenticator.create_for_stream(
             self,
             key="X-Auth-Token",
-            value=self.config.get("auth_token"),
+            value=str(self.config.get("access_token")),
             location="header",
         )
 
