@@ -49,3 +49,7 @@ class BigcommerceStream(RESTStream):
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         if response.status_code != 204:
             yield from extract_jsonpath(self.records_jsonpath, input=response.json())
+
+    @staticmethod
+    def _url_encode(val) -> str:
+        return str(val)
