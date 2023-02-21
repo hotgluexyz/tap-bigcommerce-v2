@@ -45,12 +45,6 @@ class TapBigcommerce(Tap):
             th.DateTimeType,
             description="The earliest record date to sync",
         ),
-        th.Property(
-            "api_url",
-            th.StringType,
-            default="https://api.bigcommerce.com/stores/",
-            description="The url for the API service",
-        ),
     ).to_dict()
 
     def discover_streams(self) -> List[Stream]:
