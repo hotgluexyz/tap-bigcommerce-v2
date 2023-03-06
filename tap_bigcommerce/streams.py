@@ -1,10 +1,10 @@
 """Stream type classes for tap-bigcommerce."""
 
 from singer_sdk import typing as th
+from typing import Optional
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
-
 
 class CategoriesStream(BigcommerceV3Stream):
     """Define custom stream."""
@@ -254,6 +254,103 @@ class OrdersStream(BigcommerceV2Stream):
         th.Property("custom_status", th.StringType),
     ).to_dict()
 
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        """Return a context dictionary for child streams."""
+        return {
+            "order_products_path": record["products"]["resource"],
+        }
+
+class OrderLinesStream(BigcommerceV2Stream):
+    """Define custom stream."""
+
+    name = "order_lines"
+    path = "/v2{order_products_path}"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = OrdersStream
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("order_id", th.IntegerType),
+        th.Property("product_id", th.IntegerType),
+        th.Property("variant_id", th.IntegerType),
+        th.Property("order_address_id", th.IntegerType),
+        th.Property("name", th.StringType),
+        th.Property("name_customer", th.StringType),
+        th.Property("name_merchant", th.StringType),
+        th.Property("sku", th.StringType),
+        th.Property("upc", th.StringType),
+        th.Property("type", th.StringType),
+        th.Property("base_price", th.StringType),
+        th.Property("price_ex_tax", th.StringType),
+        th.Property("price_inc_tax", th.StringType),
+        th.Property("price_tax", th.StringType),
+        th.Property("base_total", th.StringType),
+        th.Property("total_ex_tax", th.StringType),
+        th.Property("total_inc_tax", th.StringType),
+        th.Property("total_tax", th.StringType),
+        th.Property("weight", th.StringType),
+        th.Property("width", th.StringType),
+        th.Property("height", th.StringType),
+        th.Property("depth", th.StringType),
+        th.Property("quantity", th.IntegerType),
+        th.Property("base_cost_price", th.StringType),
+        th.Property("cost_price_inc_tax", th.StringType),
+        th.Property("cost_price_ex_tax", th.StringType),
+        th.Property("cost_price_tax", th.StringType),
+        th.Property("is_refunded", th.BooleanType),
+        th.Property("quantity_refunded", th.IntegerType),
+        th.Property("refund_amount", th.StringType),
+        th.Property("return_id", th.IntegerType),
+        th.Property("wrapping_id", th.IntegerType),
+        th.Property("wrapping_name", th.StringType),
+        th.Property("base_wrapping_cost", th.StringType),
+        th.Property("wrapping_cost_ex_tax", th.StringType),
+        th.Property("wrapping_cost_inc_tax", th.StringType),
+        th.Property("wrapping_cost_tax", th.StringType),
+        th.Property("wrapping_message", th.StringType),
+        th.Property("quantity_shipped", th.IntegerType),
+        th.Property("event_name", th.StringType),
+        th.Property("event_date", th.DateTimeType),
+        th.Property("fixed_shipping_cost", th.StringType),
+        th.Property("ebay_item_id", th.StringType),
+        th.Property("ebay_transaction_id", th.StringType),
+        th.Property("option_set_id", th.IntegerType),
+        th.Property("parent_order_product_id", th.IntegerType),
+        th.Property("is_bundled_product", th.BooleanType),
+        th.Property("bin_picking_number", th.StringType),
+        th.Property("external_id", th.StringType),
+        th.Property("fulfillment_source", th.StringType),
+        th.Property("brand", th.StringType),
+        th.Property("gift_certificate_id", th.CustomType({"type": ["number", "string"]})),
+        th.Property("applied_discounts", th.ArrayType(
+            th.ObjectType(
+                th.Property("id", th.StringType),
+                th.Property("amount", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("code", th.StringType), 
+                th.Property("target", th.StringType), 
+            )
+        )),
+        th.Property("product_options", th.ArrayType(
+            th.ObjectType(
+                th.Property("id", th.IntegerType),
+                th.Property("option_id", th.IntegerType),
+                th.Property("order_product_id", th.IntegerType),
+                th.Property("product_option_id", th.IntegerType), 
+                th.Property("display_name", th.StringType), 
+                th.Property("display_name_customer", th.StringType), 
+                th.Property("display_name_merchant", th.StringType), 
+                th.Property("display_value", th.StringType), 
+                th.Property("display_value_customer", th.StringType), 
+                th.Property("display_value_merchant", th.StringType), 
+                th.Property("value", th.StringType), 
+                th.Property("type", th.StringType), 
+                th.Property("name", th.StringType), 
+                th.Property("display_style", th.StringType), 
+            )
+        )),
+    ).to_dict()
+
 
 class ProductsStream(BigcommerceV3Stream):
     """Define custom stream."""
@@ -266,9 +363,9 @@ class ProductsStream(BigcommerceV3Stream):
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("name", th.StringType),
-        th.Property("type", th.DateTimeType),
-        th.Property("sku", th.DateTimeType),
-        th.Property("description", th.DateTimeType),
+        th.Property("type", th.StringType),
+        th.Property("sku", th.StringType),
+        th.Property("description", th.StringType),
         th.Property("weight", th.NumberType),
         th.Property("width", th.NumberType),
         th.Property("depth", th.NumberType),
@@ -306,7 +403,7 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("availability_description", th.StringType),
         th.Property("availability", th.StringType),
         th.Property("gift_wrapping_options_type", th.StringType),
-        th.Property("gift_wrapping_options_list", th.ArrayType(th.IntegerType)),
+        th.Property("gift_wrapping_options_list", th.ArrayType(th.StringType)),
         th.Property("sort_order", th.IntegerType),
         th.Property("condition", th.StringType),
         th.Property("is_condition_shown", th.BooleanType),
@@ -338,3 +435,48 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("open_graph_use_product_name", th.BooleanType),
         th.Property("open_graph_use_image", th.BooleanType),
     ).to_dict()
+
+class VariantsStream(BigcommerceV3Stream):
+    """Define custom stream."""
+    name = "variants"
+    path = "/v3/catalog/variants"
+    primary_keys = ["id"]
+    records_jsonpath = "$.data[*]"
+    replication_key = None
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("product_id", th.IntegerType),
+        th.Property("sku", th.StringType),
+        th.Property("sku_id", th.IntegerType),
+        th.Property("price", th.NumberType),
+        th.Property("calculated_price", th.NumberType),
+        th.Property("sale_price", th.NumberType),
+        th.Property("retail_price", th.NumberType),
+        th.Property("map_price", th.NumberType),
+        th.Property("weight", th.NumberType),
+        th.Property("calculated_weight", th.NumberType),
+        th.Property("width", th.NumberType),
+        th.Property("height", th.NumberType),
+        th.Property("depth", th.NumberType),
+        th.Property("is_free_shipping", th.BooleanType),
+        th.Property("fixed_cost_shipping_price", th.NumberType),
+        th.Property("purchasing_disabled", th.BooleanType),
+        th.Property("purchasing_disabled_message", th.StringType),
+        th.Property("image_url", th.StringType),
+        th.Property("cost_price", th.NumberType),
+        th.Property("upc", th.StringType),
+        th.Property("mpn", th.StringType),
+        th.Property("gtin", th.StringType),
+        th.Property("inventory_level", th.IntegerType),
+        th.Property("inventory_warning_level", th.IntegerType),
+        th.Property("bin_picking_number", th.StringType),
+        th.Property("option_values", th.ArrayType(
+            th.ObjectType(
+                th.Property("id", th.NumberType),
+                th.Property("label", th.StringType),
+                th.Property("option_id", th.NumberType),
+                th.Property("option_display_name", th.StringType),
+            )
+        ))
+    ).to_dict()
+
