@@ -3,6 +3,7 @@
 from typing import Iterable
 
 import requests
+import datetime
 from pendulum import parse
 from singer_sdk.authenticators import APIKeyAuthenticator
 from singer_sdk.helpers.jsonpath import extract_jsonpath
@@ -43,7 +44,7 @@ class BigcommerceStream(RESTStream):
         start_date = self.config.get("start_date")
         if start_date:
             start_date = parse(self.config.get("start_date"))
-        rep_key = self.get_starting_timestamp(context)
+        rep_key = self.get_starting_timestamp(context) + datetime.timedelta(seconds=1)
         return rep_key or start_date
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
