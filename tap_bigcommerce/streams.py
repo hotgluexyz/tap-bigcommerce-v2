@@ -480,3 +480,36 @@ class VariantsStream(BigcommerceV3Stream):
         ))
     ).to_dict()
 
+
+class RefundsStream(BigcommerceV3Stream):
+    name = "refunds"
+    path = "/v3/orders/payment_actions/refunds"
+    primary_keys = ["order_id"]
+    records_jsonpath = "$.data[*]"
+    replication_key = None
+    schema = th.PropertiesList(
+        th.Property("order_id", th.IntegerType),
+        th.Property("reason", th.StringType),
+        th.Property("total_amount", th.NumberType),
+        th.Property("total_tax", th.NumberType),
+        th.Property("uses_merchant_override_values", th.BooleanType),
+        th.Property("items", th.ArrayType(
+            th.ObjectType(
+                th.Property("item_id", th.NumberType),
+                th.Property("item_type", th.StringType),
+                th.Property("reason", th.StringType),
+                th.Property("quantity", th.NumberType),
+                th.Property("requested_amount", th.NumberType),
+            )
+        )),
+        th.Property("payments", th.ArrayType(
+            th.ObjectType(
+                th.Property("provider_id", th.StringType),
+                th.Property("amount", th.NumberType),
+                th.Property("offline", th.BooleanType),
+                th.Property("is_declined", th.BooleanType),
+                th.Property("declined_message", th.StringType),
+            )
+        ))
+    ).to_dict()
+
