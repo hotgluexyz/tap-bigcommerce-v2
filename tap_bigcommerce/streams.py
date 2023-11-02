@@ -256,8 +256,10 @@ class OrdersStream(BigcommerceV2Stream):
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
+        abc = ""
         return {
             "order_products_path": record["products"]["resource"],
+            "order_id": record["id"],
         }
 
 class OrderLinesStream(BigcommerceV2Stream):
@@ -511,5 +513,46 @@ class RefundsStream(BigcommerceV3Stream):
                 th.Property("declined_message", th.StringType),
             )
         ))
+    ).to_dict()
+
+class OrderShippingAddressStream(BigcommerceV3Stream):
+    name = "order_shipping_addresses"
+    path = "/v2/orders/{order_id}/shipping_addresses"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = OrdersStream
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("order_id", th.IntegerType),
+        th.Property("first_name", th.StringType),
+        th.Property("last_name", th.StringType),
+        th.Property("company", th.StringType),
+        th.Property("street_1", th.StringType),
+        th.Property("street_2", th.StringType),
+        th.Property("city", th.StringType),
+        th.Property("zip", th.StringType),
+        th.Property("country", th.StringType),
+        th.Property("country_iso2", th.StringType),
+        th.Property("state", th.StringType),
+        th.Property("email", th.StringType),
+        th.Property("phone", th.StringType),
+        th.Property("items_total", th.NumberType),
+        th.Property("items_shipped", th.NumberType),
+        th.Property("shipping_method", th.StringType),
+        th.Property("base_cost", th.StringType),
+        th.Property("cost_ex_tax", th.StringType),
+        th.Property("cost_inc_tax", th.StringType),
+        th.Property("cost_tax", th.StringType),
+        th.Property("cost_tax_class_id", th.NumberType),
+        th.Property("base_handling_cost", th.StringType),
+        th.Property("handling_cost_ex_tax", th.StringType),
+        th.Property("handling_cost_inc_tax", th.StringType),
+        th.Property("handling_cost_tax", th.StringType),
+        th.Property("handling_cost_tax_class_id", th.NumberType),
+        th.Property("shipping_zone_id", th.NumberType),
+        th.Property("shipping_zone_name", th.StringType),
+        th.Property("shipping_quotes", th.CustomType({"type": ["object", "string"]})),
+        th.Property("form_fields", th.CustomType({"type": ["array", "string"]})),
+        
     ).to_dict()
 
