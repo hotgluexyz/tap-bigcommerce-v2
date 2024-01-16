@@ -6,9 +6,8 @@ from typing import Optional
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
 
-class CategoriesStream(BigcommerceV3Stream):
-    """Define custom stream."""
 
+class CategoriesStream(BigcommerceV3Stream):
     name = "categories"
     path = "/v3/catalog/trees/categories"
     primary_keys = ["id"]
@@ -45,8 +44,6 @@ class CategoriesStream(BigcommerceV3Stream):
 
 
 class CouponsStream(BigcommerceV2Stream):
-    """Define custom stream."""
-
     name = "coupons"
     path = "/v2/coupons"
     primary_keys = ["id"]
@@ -77,8 +74,6 @@ class CouponsStream(BigcommerceV2Stream):
 
 
 class CustomersStream(BigcommerceV3Stream):
-    """Define custom stream."""
-
     name = "customers"
     path = "/v3/customers"
     primary_keys = ["id"]
@@ -262,6 +257,7 @@ class OrdersStream(BigcommerceV2Stream):
             "order_id": record["id"],
         }
 
+
 class OrderLinesStream(BigcommerceV2Stream):
     """Define custom stream."""
 
@@ -329,8 +325,8 @@ class OrderLinesStream(BigcommerceV2Stream):
                 th.Property("id", th.StringType),
                 th.Property("amount", th.StringType),
                 th.Property("name", th.StringType),
-                th.Property("code", th.StringType), 
-                th.Property("target", th.StringType), 
+                th.Property("code", th.StringType),
+                th.Property("target", th.StringType),
             )
         )),
         th.Property("product_options", th.ArrayType(
@@ -338,17 +334,17 @@ class OrderLinesStream(BigcommerceV2Stream):
                 th.Property("id", th.IntegerType),
                 th.Property("option_id", th.IntegerType),
                 th.Property("order_product_id", th.IntegerType),
-                th.Property("product_option_id", th.IntegerType), 
-                th.Property("display_name", th.StringType), 
-                th.Property("display_name_customer", th.StringType), 
-                th.Property("display_name_merchant", th.StringType), 
-                th.Property("display_value", th.StringType), 
-                th.Property("display_value_customer", th.StringType), 
-                th.Property("display_value_merchant", th.StringType), 
-                th.Property("value", th.StringType), 
-                th.Property("type", th.StringType), 
-                th.Property("name", th.StringType), 
-                th.Property("display_style", th.StringType), 
+                th.Property("product_option_id", th.IntegerType),
+                th.Property("display_name", th.StringType),
+                th.Property("display_name_customer", th.StringType),
+                th.Property("display_name_merchant", th.StringType),
+                th.Property("display_value", th.StringType),
+                th.Property("display_value_customer", th.StringType),
+                th.Property("display_value_merchant", th.StringType),
+                th.Property("value", th.StringType),
+                th.Property("type", th.StringType),
+                th.Property("name", th.StringType),
+                th.Property("display_style", th.StringType),
             )
         )),
     ).to_dict()
@@ -437,6 +433,7 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("open_graph_use_product_name", th.BooleanType),
         th.Property("open_graph_use_image", th.BooleanType),
     ).to_dict()
+
 
 class VariantsStream(BigcommerceV3Stream):
     """Define custom stream."""
@@ -553,6 +550,26 @@ class OrderShippingAddressStream(BigcommerceV3Stream):
         th.Property("shipping_zone_name", th.StringType),
         th.Property("shipping_quotes", th.CustomType({"type": ["object", "string"]})),
         th.Property("form_fields", th.CustomType({"type": ["array", "string"]})),
-        
     ).to_dict()
+
+
+class OrderConsignmentsStream(BigcommerceV2Stream):
+    name = "order_consignments"
+    path = "/v2/orders/{order_id}/consignments"
+    replication_key = None
+    parent_stream_type = OrdersStream
+    schema = th.PropertiesList(
+        th.Property("pickups", th.CustomType({"type": ["array", "string"]})),
+        th.Property("shipping", th.CustomType({"type": ["array", "string"]})),
+        th.Property("downloads", th.CustomType({"type": ["array", "string"]})),
+        th.Property("email", th.CustomType({"type": ["object", "string"]})),
+        th.Property("order_id", th.IntegerType),
+    ).to_dict()
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row["order_id"] = context.get("order_id")
+        return row
+
+    def get_next_page_token(self, response, previous_token):
+        return None
 
