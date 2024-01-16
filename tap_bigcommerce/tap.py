@@ -14,7 +14,8 @@ from tap_bigcommerce.streams import (
     VariantsStream,
     OrderLinesStream,
     RefundsStream,
-    OrderShippingAddressStream
+    OrderShippingAddressStream,
+    OrderConsignmentsStream
 )
 
 STREAM_TYPES = [
@@ -26,7 +27,8 @@ STREAM_TYPES = [
     VariantsStream,
     OrderLinesStream,
     RefundsStream,
-    OrderShippingAddressStream
+    OrderShippingAddressStream,
+    OrderConsignmentsStream
 ]
 
 
