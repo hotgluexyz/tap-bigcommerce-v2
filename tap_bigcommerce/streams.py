@@ -1,7 +1,8 @@
 """Stream type classes for tap-bigcommerce."""
 
+from requests.models import Response as Response
 from singer_sdk import typing as th
-from typing import Optional
+from typing import Iterable, Optional
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
@@ -431,8 +432,13 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("open_graph_description", th.StringType),
         th.Property("open_graph_use_meta_description", th.BooleanType),
         th.Property("open_graph_use_product_name", th.BooleanType),
-        th.Property("open_graph_use_image", th.BooleanType),
+        th.Property("open_graph_use_image", th.BooleanType)
     ).to_dict()
+
+    def get_child_context(self, record, context):
+        return {
+            "product_id": record["id"],
+        }
 
 
 class VariantsStream(BigcommerceV3Stream):
@@ -573,3 +579,24 @@ class OrderConsignmentsStream(BigcommerceV2Stream):
     def get_next_page_token(self, response, previous_token):
         return None
 
+
+class ProductImagesStream(BigcommerceV3Stream):
+    name = "product_images"
+    path = "/v3/catalog/products/{product_id}/images"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = ProductsStream
+
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("product_id", th.IntegerType),
+        th.Property("image_file", th.StringType),
+        th.Property("url_zoom", th.StringType),
+        th.Property("url_standard", th.StringType),
+        th.Property("url_thumbnail", th.StringType),
+        th.Property("url_tiny", th.StringType),
+        th.Property("date_modified", th.DateTimeType)
+    ).to_dict()
+
+    def parse_response(self, response):
+        yield from response.json()["data"]
