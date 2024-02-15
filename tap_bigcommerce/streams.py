@@ -211,7 +211,7 @@ class OrdersStream(BigcommerceV2Stream):
                 th.Property("country_iso2", th.StringType),
                 th.Property("phone", th.StringType),
                 th.Property("email", th.StringType),
-                th.Property("form_fields", th.ArrayType(th.StringType)),
+                th.Property("form_fields", th.CustomType({"type": ["array", "string"]})),
             ),
         ),
         th.Property("is_email_opt_in", th.BooleanType),
