@@ -1,13 +1,15 @@
 """REST client handling, including BigcommerceStream base class."""
 
-from typing import Iterable
+from typing import Callable, Iterable
 
+import backoff
 import requests
 import datetime
 from pendulum import parse
+from singer_sdk.streams import RESTStream
+from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
 from singer_sdk.authenticators import APIKeyAuthenticator
 from singer_sdk.helpers.jsonpath import extract_jsonpath
-from singer_sdk.streams import RESTStream
 
 
 class BigcommerceStream(RESTStream):
@@ -54,3 +56,16 @@ class BigcommerceStream(RESTStream):
     @staticmethod
     def _url_encode(val) -> str:
         return str(val)
+
+    def request_decorator(self, func):
+        decorator = backoff.on_exception(
+            self.backoff_wait_generator,
+            (
+                RetriableAPIError,
+                requests.exceptions.ReadTimeout,
+                requests.exceptions.ConnectionError,
+            ),
+            max_tries=self.backoff_max_tries,
+            on_backoff=self.backoff_handler,
+        )(func)
+        return decorator
