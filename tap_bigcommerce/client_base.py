@@ -14,6 +14,7 @@ from singer_sdk.helpers.jsonpath import extract_jsonpath
 
 class BigcommerceStream(RESTStream):
     """Bigcommerce stream class."""
+    extra_retry_statuses = [429,422]
 
     @property
     def url_base(self) -> str:
