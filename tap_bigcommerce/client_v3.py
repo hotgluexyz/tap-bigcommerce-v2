@@ -18,7 +18,7 @@ class BigcommerceV3Stream(BigcommerceStream):
         next_page_token = None
 
         if "meta" in response_json:
-            if not response_json['meta']:
+            if not response_json["meta"]:
                 return None
             current_page = response_json["meta"]["pagination"]["current_page"]
             total_pages = response_json["meta"]["pagination"]["total_pages"]
@@ -38,5 +38,5 @@ class BigcommerceV3Stream(BigcommerceStream):
         if self.replication_key:
             start_date = self.get_starting_time(context)
             if start_date:
-                params["date_modified:min"] = start_date.isoformat()
+                params["date_modified:min"] = start_date.strftime('%Y-%m-%dT%H:%M:%S+00:00')
         return params
