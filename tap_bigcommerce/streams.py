@@ -387,7 +387,7 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("reviews_rating_sum", th.IntegerType),
         th.Property("reviews_count", th.IntegerType),
         th.Property("total_sold", th.IntegerType),
-        th.Property("fixed_cost_shipping_price", th.IntegerType),
+        th.Property("fixed_cost_shipping_price", th.NumberType),
         th.Property("is_free_shipping", th.BooleanType),
         th.Property("is_visible", th.BooleanType),
         th.Property("is_featured", th.BooleanType),
