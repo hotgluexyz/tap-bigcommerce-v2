@@ -11,7 +11,7 @@ from tap_bigcommerce.client_v3 import BigcommerceV3Stream
 class CategoriesStream(BigcommerceV3Stream):
     name = "categories"
     path = "/v3/catalog/trees/categories"
-    primary_keys = ["id"]
+    primary_keys = ["category_id"]
     records_jsonpath = "$.data[*]"
     replication_key = None
 
