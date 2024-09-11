@@ -3,6 +3,8 @@
 from requests.models import Response as Response
 from singer_sdk import typing as th
 from typing import Iterable, Optional
+import requests
+from singer_sdk.helpers.jsonpath import extract_jsonpath
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
@@ -141,6 +143,7 @@ class OrdersStream(BigcommerceV2Stream):
     path = "/v2/orders"
     primary_keys = ["id"]
     replication_key = "date_modified"
+    additional_params = {"include": ["consignments", "consignments.line_items"]}
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("customer_id", th.IntegerType),
@@ -252,7 +255,7 @@ class OrdersStream(BigcommerceV2Stream):
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
-        abc = ""
+        BigcommerceV2Stream.consignments = record.get("consignments")
         return {
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
@@ -571,7 +574,16 @@ class OrderConsignmentsStream(BigcommerceV2Stream):
         th.Property("email", th.CustomType({"type": ["object", "string"]})),
         th.Property("order_id", th.IntegerType),
     ).to_dict()
+    
+    def _request(
+        self, prepared_request: requests.PreparedRequest, context: Optional[dict]
+    ) -> requests.Response:
+        consignments = BigcommerceV2Stream.consignments
+        return consignments
 
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        yield from extract_jsonpath(self.records_jsonpath, input=response)
+    
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         row["order_id"] = context.get("order_id")
         return row

@@ -9,6 +9,7 @@ class BigcommerceV2Stream(BigcommerceStream):
     """hubspot stream class."""
 
     records_jsonpath = "$[*]"
+    consignments = []
 
     def get_next_page_token(
         self, response: requests.Response, previous_token: Optional[Any]
@@ -34,4 +35,6 @@ class BigcommerceV2Stream(BigcommerceStream):
             start_date = self.get_starting_time(context)
             if start_date:
                 params["min_date_modified"] = start_date.isoformat()
+        if hasattr(self, "additional_params"):
+            params.update(self.additional_params)
         return params
