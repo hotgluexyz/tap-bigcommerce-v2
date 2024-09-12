@@ -10,6 +10,7 @@ class BigcommerceV2Stream(BigcommerceStream):
 
     records_jsonpath = "$[*]"
     consignments = []
+    order_items = []
 
     def get_next_page_token(
         self, response: requests.Response, previous_token: Optional[Any]
