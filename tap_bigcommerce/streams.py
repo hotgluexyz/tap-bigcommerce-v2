@@ -3,6 +3,8 @@
 from requests.models import Response as Response
 from singer_sdk import typing as th
 from typing import Iterable, Optional
+import requests
+from singer_sdk.helpers.jsonpath import extract_jsonpath
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
@@ -141,6 +143,7 @@ class OrdersStream(BigcommerceV2Stream):
     path = "/v2/orders"
     primary_keys = ["id"]
     replication_key = "date_modified"
+    additional_params = {"include": ["consignments", "consignments.line_items"]}
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("customer_id", th.IntegerType),
@@ -250,9 +253,19 @@ class OrdersStream(BigcommerceV2Stream):
         th.Property("custom_status", th.StringType),
     ).to_dict()
 
+    def get_consignment_items(self, consignments):
+        items = []
+        for c in consignments:
+            shipping = c.get("shipping", [])
+            for s in shipping:
+                items.extend(s.get("line_items", []))
+        return items
+
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
-        abc = ""
+        consignments = record.get("consignments", [])
+        BigcommerceV2Stream.consignments = consignments
+        BigcommerceV2Stream.order_items = self.get_consignment_items(consignments)
         return {
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
@@ -350,6 +363,17 @@ class OrderLinesStream(BigcommerceV2Stream):
         )),
     ).to_dict()
 
+    def _request(
+        self, prepared_request: requests.PreparedRequest, context: Optional[dict]
+    ) -> requests.Response:
+        order_items = BigcommerceV2Stream.order_items
+        return order_items
+
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        yield from extract_jsonpath(self.records_jsonpath, input=response)
+
+    def get_next_page_token(self, response, previous_token):
+        return None
 
 class ProductsStream(BigcommerceV3Stream):
     """Define custom stream."""
@@ -571,7 +595,16 @@ class OrderConsignmentsStream(BigcommerceV2Stream):
         th.Property("email", th.CustomType({"type": ["object", "string"]})),
         th.Property("order_id", th.IntegerType),
     ).to_dict()
+    
+    def _request(
+        self, prepared_request: requests.PreparedRequest, context: Optional[dict]
+    ) -> requests.Response:
+        consignments = BigcommerceV2Stream.consignments
+        return consignments
 
+    def parse_response(self, response: requests.Response) -> Iterable[dict]:
+        yield from extract_jsonpath(self.records_jsonpath, input=response)
+    
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         row["order_id"] = context.get("order_id")
         return row
