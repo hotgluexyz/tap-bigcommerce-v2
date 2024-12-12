@@ -493,30 +493,46 @@ class RefundsStream(BigcommerceV3Stream):
     records_jsonpath = "$.data[*]"
     replication_key = None
     schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
         th.Property("order_id", th.IntegerType),
+        th.Property("user_id", th.IntegerType),
+        th.Property("created", th.DateTimeType),
         th.Property("reason", th.StringType),
         th.Property("total_amount", th.NumberType),
         th.Property("total_tax", th.NumberType),
         th.Property("uses_merchant_override_values", th.BooleanType),
         th.Property("items", th.ArrayType(
             th.ObjectType(
-                th.Property("item_id", th.NumberType),
                 th.Property("item_type", th.StringType),
-                th.Property("reason", th.StringType),
+                th.Property("item_id", th.NumberType),
                 th.Property("quantity", th.NumberType),
                 th.Property("requested_amount", th.NumberType),
+                th.Property("reason", th.StringType),
+                th.Property("adjustments", th.ArrayType(
+                    th.ObjectType(
+                        th.Property("amount", th.NumberType),
+                        th.Property("description", th.StringType),
+                    )
+                ))
             )
         )),
         th.Property("payments", th.ArrayType(
             th.ObjectType(
+                th.Property("id", th.IntegerType),
                 th.Property("provider_id", th.StringType),
                 th.Property("amount", th.NumberType),
                 th.Property("offline", th.BooleanType),
                 th.Property("is_declined", th.BooleanType),
                 th.Property("declined_message", th.StringType),
+                th.Property("transaction_id", th.StringType),
             )
-        ))
+        )),
+        th.Property("store_hash", th.StringType),
     ).to_dict()
+    
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row["store_hash"] = self.config.get("store_hash")
+        return row
 
 class OrderShippingAddressStream(BigcommerceV3Stream):
     name = "order_shipping_addresses"
@@ -600,3 +616,75 @@ class ProductImagesStream(BigcommerceV3Stream):
 
     def parse_response(self, response):
         yield from response.json()["data"]
+
+
+class TransactionsStream(BigcommerceV2Stream):
+    name = "transactions"
+    path = "/v3/orders/{order_id}/transactions"
+    replication_key = None
+    parent_stream_type = OrdersStream
+    records_jsonpath = "$.data[*]"
+    schema = th.PropertiesList(
+        th.Property("order_id", th.IntegerType),
+        th.Property("event", th.StringType),
+        th.Property("method", th.StringType),
+        th.Property("amount", th.NumberType),
+        th.Property("currency", th.StringType),
+        th.Property("gateway", th.StringType),
+        th.Property("gateway_transaction_id", th.StringType),
+        th.Property("test", th.BooleanType),
+        th.Property("status", th.StringType),
+        th.Property("fraud_review", th.BooleanType),
+        th.Property("reference_transaction_id", th.IntegerType),
+        th.Property("offline", th.ObjectType(
+                th.Property("display_name", th.StringType),
+            )),
+        th.Property("custom", th.ObjectType(
+                th.Property("payment_method", th.StringType),
+            )),
+        th.Property("payment_method_id", th.StringType),
+        th.Property("id", th.IntegerType),
+        th.Property("order_id", th.StringType),
+        th.Property("date_created", th.DateTimeType),
+        th.Property("payment_instrument_token", th.StringType),
+        th.Property("avs_result", th.ObjectType(
+                th.Property("code", th.StringType),
+                th.Property("message", th.StringType),
+                th.Property("street_match", th.StringType),
+                th.Property("postal_match", th.StringType),
+            )),
+        th.Property("cvv_result", th.ObjectType(
+                th.Property("code", th.StringType),
+                th.Property("message", th.StringType),
+            )),
+        th.Property("credit_card", th.ObjectType(
+                th.Property("card_type", th.StringType),
+                th.Property("card_iin", th.StringType),
+                th.Property("card_last4", th.StringType),
+                th.Property("card_expiry_month", th.IntegerType),
+                th.Property("card_expiry_year", th.IntegerType),
+            )),
+        th.Property("gift_certificate", th.ObjectType(
+                th.Property("code", th.StringType),
+                th.Property("original_balance", th.NumberType),
+                th.Property("starting_balance", th.NumberType),
+                th.Property("remaining_balance", th.NumberType),
+                th.Property("status", th.StringType),
+            )),
+        th.Property("store_credit", th.ObjectType(
+                th.Property("remaining_balance", th.NumberType),
+            )),
+        th.Property("custom_provider_field_result", th.ObjectType(
+                th.Property("receipt_number", th.StringType),
+                th.Property("authorization_code", th.StringType),
+                th.Property("fraud_response", th.StringType),
+                th.Property("amount_received", th.NumberType),
+            )),
+    ).to_dict()
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row["order_id"] = context.get("order_id")
+        return row
+
+    def get_next_page_token(self, response, previous_token):
+        return None
