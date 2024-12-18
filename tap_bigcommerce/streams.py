@@ -2,7 +2,7 @@
 
 from requests.models import Response as Response
 from singer_sdk import typing as th
-from typing import Iterable, Optional
+from typing import Optional
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
@@ -252,7 +252,6 @@ class OrdersStream(BigcommerceV2Stream):
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
-        abc = ""
         return {
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
@@ -533,6 +532,35 @@ class RefundsStream(BigcommerceV3Stream):
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         row["store_hash"] = self.config.get("store_hash")
         return row
+
+    def get_child_context(self, record, context):
+        return {
+            "order_id": record["order_id"],
+        }
+
+
+class RefundOrderItemsStream(BigcommerceV3Stream):
+    name = "refund_order_items"
+    path = "/v3/orders/{order_id}/payment_actions/refunds"
+    primary_keys = ["item_id"]
+    replication_key = None
+    records_jsonpath = "$.data[*].items[*]"
+    parent_stream_type = RefundsStream
+
+    schema = th.PropertiesList(
+        th.Property("item_type", th.StringType),
+        th.Property("item_id", th.NumberType),
+        th.Property("quantity", th.NumberType),
+        th.Property("requested_amount", th.NumberType),
+        th.Property("reason", th.StringType),
+        th.Property("adjustments", th.ArrayType(
+            th.ObjectType(
+                th.Property("amount", th.NumberType),
+                th.Property("description", th.StringType),
+            )
+        ))
+    ).to_dict()
+
 
 class OrderShippingAddressStream(BigcommerceV3Stream):
     name = "order_shipping_addresses"
