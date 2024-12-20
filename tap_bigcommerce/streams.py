@@ -563,7 +563,6 @@ class RefundOrderItemsStream(BigcommerceV2Stream):
     parent_stream_type = RefundOrderStream
     schema = get_order_lines_schema()
 
-
 class OrderShippingAddressStream(BigcommerceV3Stream):
     name = "order_shipping_addresses"
     path = "/v2/orders/{order_id}/shipping_addresses"
@@ -652,7 +651,7 @@ class TransactionsStream(BigcommerceV2Stream):
     name = "transactions"
     path = "/v3/orders/{order_id}/transactions"
     replication_key = None
-    parent_stream_type = OrdersStream
+    parent_stream_type = RefundOrderStream
     records_jsonpath = "$.data[*]"
     schema = th.PropertiesList(
         th.Property("order_id", th.IntegerType),
@@ -674,7 +673,6 @@ class TransactionsStream(BigcommerceV2Stream):
             )),
         th.Property("payment_method_id", th.StringType),
         th.Property("id", th.IntegerType),
-        th.Property("order_id", th.StringType),
         th.Property("date_created", th.DateTimeType),
         th.Property("payment_instrument_token", th.StringType),
         th.Property("avs_result", th.ObjectType(
