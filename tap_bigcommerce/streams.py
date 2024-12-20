@@ -544,6 +544,7 @@ class RefundOrderStream(BigcommerceV2Stream):
     replication_key = None
     parent_stream_type = RefundsStream
     schema = get_orders_schema()
+    orders_synced = []
     
     def get_next_page_token(self, response, previous_token):
         return None
@@ -554,6 +555,13 @@ class RefundOrderStream(BigcommerceV2Stream):
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
         }
+        
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        if row["id"] not in self.orders_synced:
+            self.orders_synced.append(row["id"])
+            return row
+        else:
+            return None
         
 class RefundOrderItemsStream(BigcommerceV2Stream):
     name = "refund_order_items"
