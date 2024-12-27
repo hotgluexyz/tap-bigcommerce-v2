@@ -488,7 +488,7 @@ class RefundsStream(BigcommerceV3Stream):
     path = "/v3/orders/payment_actions/refunds"
     primary_keys = ["order_id"]
     records_jsonpath = "$.data[*]"
-    replication_key = None
+    replication_key = "created"
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("order_id", th.IntegerType),
