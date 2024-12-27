@@ -2,7 +2,7 @@
 
 from requests.models import Response as Response
 from singer_sdk import typing as th
-from typing import Iterable, Optional
+from typing import Optional
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
@@ -133,15 +133,8 @@ class CustomersStream(BigcommerceV3Stream):
         th.Property("segment_ids", th.ArrayType(th.StringType)),
     ).to_dict()
 
-
-class OrdersStream(BigcommerceV2Stream):
-    """Define custom stream."""
-
-    name = "orders"
-    path = "/v2/orders"
-    primary_keys = ["id"]
-    replication_key = "date_modified"
-    schema = th.PropertiesList(
+def get_orders_schema():
+    return th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("customer_id", th.IntegerType),
         th.Property("date_created", th.DateTimeType),
@@ -250,24 +243,23 @@ class OrdersStream(BigcommerceV2Stream):
         th.Property("custom_status", th.StringType),
     ).to_dict()
 
+
+class OrdersStream(BigcommerceV2Stream):
+    name = "orders"
+    path = "/v2/orders"
+    primary_keys = ["id"]
+    replication_key = "date_modified"
+    schema = get_orders_schema()
+
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
         """Return a context dictionary for child streams."""
-        abc = ""
         return {
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
         }
 
-
-class OrderLinesStream(BigcommerceV2Stream):
-    """Define custom stream."""
-
-    name = "order_lines"
-    path = "/v2{order_products_path}"
-    primary_keys = ["id"]
-    replication_key = None
-    parent_stream_type = OrdersStream
-    schema = th.PropertiesList(
+def get_order_lines_schema():
+    return th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("order_id", th.IntegerType),
         th.Property("product_id", th.IntegerType),
@@ -350,10 +342,16 @@ class OrderLinesStream(BigcommerceV2Stream):
         )),
     ).to_dict()
 
+class OrderLinesStream(BigcommerceV2Stream):
+    name = "order_lines"
+    path = "/v2{order_products_path}"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = OrdersStream
+    schema = get_order_lines_schema()
+
 
 class ProductsStream(BigcommerceV3Stream):
-    """Define custom stream."""
-
     name = "products"
     path = "/v3/catalog/products"
     primary_keys = ["id"]
@@ -442,7 +440,6 @@ class ProductsStream(BigcommerceV3Stream):
 
 
 class VariantsStream(BigcommerceV3Stream):
-    """Define custom stream."""
     name = "variants"
     path = "/v3/catalog/variants"
     primary_keys = ["id"]
@@ -534,6 +531,46 @@ class RefundsStream(BigcommerceV3Stream):
         row["store_hash"] = self.config.get("store_hash")
         return row
 
+    def get_child_context(self, record, context):
+        return {
+            "order_id": record["order_id"],
+        }
+
+
+class RefundOrderStream(BigcommerceV2Stream):
+    name = "refund_order"
+    path = "/v2/orders/{order_id}"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = RefundsStream
+    schema = get_orders_schema()
+    orders_synced = []
+    
+    def get_next_page_token(self, response, previous_token):
+        return None
+    
+    def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
+        """Return a context dictionary for child streams."""
+        return {
+            "order_products_path": record["products"]["resource"],
+            "order_id": record["id"],
+        }
+        
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        if row["id"] not in self.orders_synced:
+            self.orders_synced.append(row["id"])
+            return row
+        else:
+            return None
+        
+class RefundOrderItemsStream(BigcommerceV2Stream):
+    name = "refund_order_items"
+    path = "/v2{order_products_path}"
+    primary_keys = ["id"]
+    replication_key = None
+    parent_stream_type = RefundOrderStream
+    schema = get_order_lines_schema()
+
 class OrderShippingAddressStream(BigcommerceV3Stream):
     name = "order_shipping_addresses"
     path = "/v2/orders/{order_id}/shipping_addresses"
@@ -622,7 +659,7 @@ class TransactionsStream(BigcommerceV2Stream):
     name = "transactions"
     path = "/v3/orders/{order_id}/transactions"
     replication_key = None
-    parent_stream_type = OrdersStream
+    parent_stream_type = RefundOrderStream
     records_jsonpath = "$.data[*]"
     schema = th.PropertiesList(
         th.Property("order_id", th.IntegerType),
@@ -644,7 +681,6 @@ class TransactionsStream(BigcommerceV2Stream):
             )),
         th.Property("payment_method_id", th.StringType),
         th.Property("id", th.IntegerType),
-        th.Property("order_id", th.StringType),
         th.Property("date_created", th.DateTimeType),
         th.Property("payment_instrument_token", th.StringType),
         th.Property("avs_result", th.ObjectType(
