@@ -36,3 +36,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 # CLI declaration
 tap-bigcommerce-v2 = 'tap_bigcommerce.tap:TapBigcommerce.cli'
+tap-bigcommerce = 'tap_bigcommerce.tap:TapBigcommerce.cli'
