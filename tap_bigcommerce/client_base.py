@@ -16,7 +16,7 @@ from singer import StateMessage
 
 class BigcommerceStream(RESTStream):
     """Bigcommerce stream class."""
-    extra_retry_statuses = [429,422]
+    extra_retry_statuses = [429,422,401]
 
     @property
     def url_base(self) -> str:
