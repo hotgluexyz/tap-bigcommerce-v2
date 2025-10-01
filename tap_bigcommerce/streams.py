@@ -724,3 +724,54 @@ class TransactionsStream(BigcommerceV2Stream):
 
     def get_next_page_token(self, response, previous_token):
         return None
+
+class InventorySettingsStream(BigcommerceV3Stream):
+    name = "settings_inventory"
+    path = "/v3/settings/inventory"
+    replication_key = None
+    schema = th.PropertiesList(
+        th.Property("data", th.ObjectType(
+            th.Property("product_out_of_stock_behavior", th.StringType),  # Allowed: do_nothing | hide_product | hide_product_and_accessible | hide_product_and_redirect
+            th.Property("option_out_of_stock_behavior", th.StringType),   # Allowed: do_nothing | hide_option | label_option
+            th.Property("update_stock_behavior", th.StringType),          # Allowed: order_placed | order_completed_or_shipped
+            th.Property("edit_order_stock_adjustment", th.BooleanType),
+            th.Property("refund_order_stock_adjustment", th.BooleanType),
+            th.Property("stock_level_display", th.StringType),            # Allowed: dont_show | show | show_when_low
+            th.Property("default_out_of_stock_message", th.StringType),
+            th.Property("hide_in_product_filtering", th.BooleanType),
+            th.Property("show_pre_order_stock_levels", th.BooleanType),
+            th.Property("show_out_of_stock_message", th.BooleanType),
+        )),
+        th.Property("meta", th.ObjectType()),
+    ).to_dict()
+
+class UnitsOfMeasurementSettingsStream(BigcommerceV3Stream):
+    name = "settings_units_of_measurement"
+    path = "/v3/settings/store/units-of-measurement"
+    replication_key = None
+    schema = th.PropertiesList(
+        th.Property("data", th.ObjectType(
+            th.Property("weight_measurement", th.StringType),  # Allowed: LBS | Ounces | KGS | Grams | Tonnes
+            th.Property("length_measurement", th.StringType),  # Allowed: Inches | Centimeters
+            th.Property("decimal_token", th.StringType),
+            th.Property("thousands_token", th.StringType),
+            th.Property("decimal_places", th.IntegerType),
+            th.Property("factoring_dimension", th.StringType),  # Allowed: depth | height | width
+        )),
+        th.Property("meta", th.ObjectType()),
+    ).to_dict()
+
+class StoreProfileSettingsStream(BigcommerceV3Stream):
+    name = "settings_store_profile"
+    path = "/v3/settings/store/profile"
+    replication_key = None
+    schema = th.PropertiesList(
+        th.Property("data", th.ObjectType(
+            th.Property("store_address", th.StringType),
+            th.Property("store_address_type", th.StringType),  # Allowed: Home Office | Commercial Office | Retail | Warehouse
+            th.Property("store_email", th.StringType),
+            th.Property("store_name", th.StringType),
+            th.Property("store_phone", th.StringType),
+        )),
+        th.Property("meta", th.ObjectType()),
+    ).to_dict()
