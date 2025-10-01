@@ -19,7 +19,10 @@ from tap_bigcommerce.streams import (
     RefundOrderItemsStream,
     OrderShippingAddressStream,
     OrderConsignmentsStream,
-    TransactionsStream
+    TransactionsStream,
+    InventorySettingsStream,
+    UnitsOfMeasurementSettingsStream,
+    StoreProfileSettingsStream
 )
 
 STREAM_TYPES = [
@@ -36,7 +39,10 @@ STREAM_TYPES = [
     RefundOrderItemsStream,
     OrderShippingAddressStream,
     OrderConsignmentsStream,
-    TransactionsStream
+    TransactionsStream,
+    InventorySettingsStream,
+    UnitsOfMeasurementSettingsStream,
+    StoreProfileSettingsStream
 ]
 
 
