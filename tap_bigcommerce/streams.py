@@ -136,6 +136,7 @@ class CustomersStream(BigcommerceV3Stream):
 def get_orders_schema():
     return th.PropertiesList(
         th.Property("id", th.IntegerType),
+        th.Property("store_id", th.StringType),
         th.Property("customer_id", th.IntegerType),
         th.Property("date_created", th.DateTimeType),
         th.Property("date_modified", th.DateTimeType),
@@ -257,6 +258,11 @@ class OrdersStream(BigcommerceV2Stream):
             "order_products_path": record["products"]["resource"],
             "order_id": record["id"],
         }
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row = super().post_process(row, context)
+        row["store_id"] = self.config.get("store_hash")
+        return row
 
 def get_order_lines_schema():
     return th.PropertiesList(
