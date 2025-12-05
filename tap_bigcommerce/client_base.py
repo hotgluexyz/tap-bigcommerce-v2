@@ -1,6 +1,6 @@
 """REST client handling, including BigcommerceStream base class."""
 
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 import backoff
 import requests
@@ -18,6 +18,7 @@ class BigcommerceStream(RESTStream):
     """Bigcommerce stream class."""
     extra_retry_statuses = [429,422,401]
     filter_by_channel_id_in_query_string = False
+    filter_by_channel_id_in_body = False
 
     @property
     def url_base(self) -> str:
@@ -73,6 +74,25 @@ class BigcommerceStream(RESTStream):
             on_backoff=self.backoff_handler,
         )(func)
         return decorator
+
+
+    def post_process(self, row: dict, context: Optional[dict] = None) -> Optional[dict]:
+        channel_id = self.config.get("channel_id")
+        # if filter_by_channel_id_in_body is True and channel_id is provided,
+        # filter the record by the channel_id
+        if self.filter_by_channel_id_in_body and channel_id:
+            # looks for the given record fields:
+            # `channel_id` is an integer
+            # `channel_ids` is an array of integers
+            # `origin_channel_id` is an integer
+            record_channel_ids = row.get("channel_ids") or []
+            if row.get("channel_id") == channel_id \
+                or row.get("origin_channel_id") == channel_id \
+                or channel_id in record_channel_ids:
+                return row
+            return None
+        return row
+
 
     def _write_state_message(self) -> None:
         """Write out a STATE message with the latest state."""
