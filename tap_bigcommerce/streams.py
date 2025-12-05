@@ -441,7 +441,7 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("availability_description", th.StringType),
         th.Property("availability", th.StringType),
         th.Property("gift_wrapping_options_type", th.StringType),
-        th.Property("gift_wrapping_options_list", th.ArrayType(th.StringType)),
+        th.Property("gift_wrapping_options_list", th.ArrayType(th.IntegerType)),
         th.Property("sort_order", th.IntegerType),
         th.Property("condition", th.StringType),
         th.Property("is_condition_shown", th.BooleanType),
