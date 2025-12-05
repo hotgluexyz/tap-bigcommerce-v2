@@ -2,10 +2,30 @@
 
 from requests.models import Response as Response
 from singer_sdk import typing as th
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
+
+
+class CategoryTreesStream(BigcommerceV3Stream):
+    name = "category_trees"
+    path = "/v3/catalog/trees"
+    primary_keys = ["id"]
+    records_jsonpath = "$.data[*]"
+    replication_key = None
+    filter_by_channel_id_in_query_string = True
+
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("name", th.StringType),
+        th.Property("channels", th.ArrayType(th.IntegerType)),
+    ).to_dict()
+
+    def get_child_context(self, record, context):
+        return {
+            "tree_id": record["id"],
+        }
 
 
 class CategoriesStream(BigcommerceV3Stream):
@@ -14,6 +34,7 @@ class CategoriesStream(BigcommerceV3Stream):
     primary_keys = ["category_id"]
     records_jsonpath = "$.data[*]"
     replication_key = None
+    parent_stream_type = CategoryTreesStream
 
     schema = th.PropertiesList(
         th.Property("category_id", th.IntegerType),
@@ -43,6 +64,13 @@ class CategoriesStream(BigcommerceV3Stream):
         th.Property("image_url", th.StringType),
     ).to_dict()
 
+    def get_url_params(
+        self, context: Optional[dict], next_page_token: Optional[Any]
+    ) -> Dict[str, Any]:
+        params = super().get_url_params(context, next_page_token)
+        if context.get("tree_id"):
+            params["tree_id:in"] = context["tree_id"]
+        return params
 
 class CouponsStream(BigcommerceV2Stream):
     name = "coupons"
