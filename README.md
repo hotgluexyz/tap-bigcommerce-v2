@@ -16,7 +16,23 @@ pipx install tap-bigcommerce
 
 ### Accepted Config Options
 
-- [ ] `Developer TODO:` Provide a list of config options accepted by the tap.
+- `access_token`: The token to authenticate against the API service
+- `store_hash`: Store Hash
+- `channel_id`: Channel ID used to filter streams data.
+  The following streams support filtering by `channel_id`:
+  - `category_trees`
+  - `categories`
+  - `products`
+  - `product_images`
+  - `customers`
+  - `orders`
+  - `order_lines`
+  - `order_shipping_addresses`
+  - `order_consignments`
+  - `refund_order`
+  - `refund_order_items`
+  - `transactions`
+- `start_date`: The earliest record date to sync
 
 A full list of supported settings and capabilities for this
 tap is available by running:
