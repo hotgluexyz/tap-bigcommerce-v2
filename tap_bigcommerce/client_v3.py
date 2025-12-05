@@ -33,6 +33,8 @@ class BigcommerceV3Stream(BigcommerceStream):
     ) -> Dict[str, Any]:
         """Return a dictionary of values to be used in URL parameterization."""
         params: dict = {}
+        if self.filter_by_channel_id_in_query_string and self.config.get("channel_id"):
+            params["channel_id:in"] = self.config.get("channel_id")
         if next_page_token:
             params["page"] = next_page_token
         if self.replication_key:

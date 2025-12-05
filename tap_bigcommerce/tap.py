@@ -63,6 +63,10 @@ class TapBigcommerce(Tap):
             th.StringType,
             required=True,
             description="Store Hash",
+        ),th.Property(
+            "channel_id",
+            th.IntegerType,
+            description="Channel ID",
         ),
         th.Property(
             "start_date",
