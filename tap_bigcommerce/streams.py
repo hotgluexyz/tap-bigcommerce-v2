@@ -2,10 +2,30 @@
 
 from requests.models import Response as Response
 from singer_sdk import typing as th
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
 from tap_bigcommerce.client_v3 import BigcommerceV3Stream
+
+
+class CategoryTreesStream(BigcommerceV3Stream):
+    name = "category_trees"
+    path = "/v3/catalog/trees"
+    primary_keys = ["id"]
+    records_jsonpath = "$.data[*]"
+    replication_key = None
+    filter_by_channel_id_in_query_string = True
+
+    schema = th.PropertiesList(
+        th.Property("id", th.IntegerType),
+        th.Property("name", th.StringType),
+        th.Property("channels", th.ArrayType(th.IntegerType)),
+    ).to_dict()
+
+    def get_child_context(self, record, context):
+        return {
+            "tree_id": record["id"],
+        }
 
 
 class CategoriesStream(BigcommerceV3Stream):
@@ -14,6 +34,7 @@ class CategoriesStream(BigcommerceV3Stream):
     primary_keys = ["category_id"]
     records_jsonpath = "$.data[*]"
     replication_key = None
+    parent_stream_type = CategoryTreesStream
 
     schema = th.PropertiesList(
         th.Property("category_id", th.IntegerType),
@@ -43,6 +64,13 @@ class CategoriesStream(BigcommerceV3Stream):
         th.Property("image_url", th.StringType),
     ).to_dict()
 
+    def get_url_params(
+        self, context: Optional[dict], next_page_token: Optional[Any]
+    ) -> Dict[str, Any]:
+        params = super().get_url_params(context, next_page_token)
+        if context.get("tree_id"):
+            params["tree_id:in"] = context["tree_id"]
+        return params
 
 class CouponsStream(BigcommerceV2Stream):
     name = "coupons"
@@ -80,6 +108,8 @@ class CustomersStream(BigcommerceV3Stream):
     primary_keys = ["id"]
     records_jsonpath = "$.data[*]"
     replication_key = "date_modified"
+    filter_by_channel_id_in_body = True
+
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property(
@@ -250,6 +280,7 @@ class OrdersStream(BigcommerceV2Stream):
     path = "/v2/orders"
     primary_keys = ["id"]
     replication_key = "date_modified"
+    filter_by_channel_id_in_query_string = True
     schema = get_orders_schema()
 
     def get_child_context(self, record: dict, context: Optional[dict]) -> dict:
@@ -261,6 +292,8 @@ class OrdersStream(BigcommerceV2Stream):
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
         row = super().post_process(row, context)
+        if row is None:
+            return None
         row["store_id"] = self.config.get("store_hash")
         return row
 
@@ -363,6 +396,8 @@ class ProductsStream(BigcommerceV3Stream):
     primary_keys = ["id"]
     records_jsonpath = "$.data[*]"
     replication_key = "date_modified"
+    filter_by_channel_id_in_query_string = True
+
     schema = th.PropertiesList(
         th.Property("id", th.IntegerType),
         th.Property("name", th.StringType),
@@ -406,7 +441,7 @@ class ProductsStream(BigcommerceV3Stream):
         th.Property("availability_description", th.StringType),
         th.Property("availability", th.StringType),
         th.Property("gift_wrapping_options_type", th.StringType),
-        th.Property("gift_wrapping_options_list", th.ArrayType(th.StringType)),
+        th.Property("gift_wrapping_options_list", th.ArrayType(th.IntegerType)),
         th.Property("sort_order", th.IntegerType),
         th.Property("condition", th.StringType),
         th.Property("is_condition_shown", th.BooleanType),
@@ -534,6 +569,9 @@ class RefundsStream(BigcommerceV3Stream):
     ).to_dict()
     
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row = super().post_process(row, context)
+        if row is None:
+            return None
         row["store_hash"] = self.config.get("store_hash")
         return row
 
@@ -551,6 +589,7 @@ class RefundOrderStream(BigcommerceV2Stream):
     parent_stream_type = RefundsStream
     schema = get_orders_schema()
     orders_synced = []
+    filter_by_channel_id_in_body = True
     
     def get_next_page_token(self, response, previous_token):
         return None
@@ -563,6 +602,9 @@ class RefundOrderStream(BigcommerceV2Stream):
         }
         
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row = super().post_process(row, context)
+        if row is None:
+            return None
         if row["id"] not in self.orders_synced:
             self.orders_synced.append(row["id"])
             return row
@@ -632,6 +674,9 @@ class OrderConsignmentsStream(BigcommerceV2Stream):
     ).to_dict()
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row = super().post_process(row, context)
+        if row is None:
+            return None
         row["order_id"] = context.get("order_id")
         return row
 
@@ -725,6 +770,9 @@ class TransactionsStream(BigcommerceV2Stream):
     ).to_dict()
 
     def post_process(self, row: dict, context: Optional[dict] = None) -> dict:
+        row = super().post_process(row, context)
+        if row is None:
+            return None
         row["order_id"] = context.get("order_id")
         return row
 

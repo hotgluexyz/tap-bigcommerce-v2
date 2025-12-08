@@ -6,6 +6,7 @@ from singer_sdk import Stream, Tap
 from singer_sdk import typing as th
 
 from tap_bigcommerce.streams import (
+    CategoryTreesStream,
     CategoriesStream,
     CouponsStream,
     CustomersStream,
@@ -26,6 +27,7 @@ from tap_bigcommerce.streams import (
 )
 
 STREAM_TYPES = [
+    CategoryTreesStream,
     CategoriesStream,
     CustomersStream,
     ProductsStream,
@@ -63,6 +65,10 @@ class TapBigcommerce(Tap):
             th.StringType,
             required=True,
             description="Store Hash",
+        ),th.Property(
+            "channel_id",
+            th.IntegerType,
+            description="Channel ID",
         ),
         th.Property(
             "start_date",
