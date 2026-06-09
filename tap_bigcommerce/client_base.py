@@ -1,15 +1,15 @@
 """REST client handling, including BigcommerceStream base class."""
 
-from typing import Callable, Iterable, Optional
+from typing import Iterable, Optional
 
 import backoff
 import requests
 import datetime
 from pendulum import parse
-from singer_sdk.streams import RESTStream
-from singer_sdk.exceptions import FatalAPIError, RetriableAPIError
-from singer_sdk.authenticators import APIKeyAuthenticator
-from singer_sdk.helpers.jsonpath import extract_jsonpath
+from hotglue_singer_sdk.streams import RESTStream
+from hotglue_singer_sdk.exceptions import RetriableAPIError
+from hotglue_singer_sdk.authenticators import APIKeyAuthenticator
+from hotglue_singer_sdk.helpers.jsonpath import extract_jsonpath
 
 import singer
 from singer import StateMessage
@@ -51,7 +51,7 @@ class BigcommerceStream(RESTStream):
         start_date = self.config.get("start_date")
         if start_date:
             start_date = parse(self.config.get("start_date"))
-        rep_key = self.get_starting_timestamp(context) + datetime.timedelta(seconds=1)
+        rep_key = self.get_starting_timestamp(context) + datetime.timedelta(seconds=1) if context else None
         return rep_key or start_date
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:

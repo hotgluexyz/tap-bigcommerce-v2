@@ -1,7 +1,7 @@
 """Stream type classes for tap-bigcommerce."""
 
 from requests.models import Response as Response
-from singer_sdk import typing as th
+from hotglue_singer_sdk import typing as th
 from typing import Optional, Dict, Any
 
 from tap_bigcommerce.client_v2 import BigcommerceV2Stream
