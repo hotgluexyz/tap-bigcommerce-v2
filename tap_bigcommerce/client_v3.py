@@ -49,5 +49,5 @@ class BigcommerceV3Stream(BigcommerceStream):
             None, next_page_token=None
         )
         resp = self.request_decorator(self._request)(prepared_request, {})
-        total_count = resp.json().get("meta", {}).get("pagination", {}).get("total", 0)
+        total_count = resp.json().get("meta", {}).get("pagination", {}).get("total")
         return total_count

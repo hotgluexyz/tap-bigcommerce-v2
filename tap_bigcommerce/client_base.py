@@ -47,12 +47,6 @@ class BigcommerceStream(RESTStream):
             headers["User-Agent"] = self.config.get("user_agent")
         return headers
 
-    def get_starting_time(self, context):
-        start_date = self.config.get("start_date")
-        if start_date:
-            start_date = parse(self.config.get("start_date"))
-        rep_key = self.get_starting_timestamp(context) + datetime.timedelta(seconds=1) if context else None
-        return rep_key or start_date
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         if response.status_code != 204:
