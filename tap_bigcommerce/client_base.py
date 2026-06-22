@@ -4,8 +4,7 @@ from typing import Iterable, Optional
 
 import backoff
 import requests
-import datetime
-from pendulum import parse
+
 from hotglue_singer_sdk.streams import RESTStream
 from hotglue_singer_sdk.exceptions import RetriableAPIError
 from hotglue_singer_sdk.authenticators import APIKeyAuthenticator
