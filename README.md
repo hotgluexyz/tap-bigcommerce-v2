@@ -2,7 +2,7 @@
 
 `tap-bigcommerce` is a Singer tap for Bigcommerce.
 
-Built with the [Meltano Tap SDK](https://sdk.meltano.com) for Singer Taps.
+Built with the [Hotglue Singer SDK](https://github.com/hotgluexyz/HotglueSingerSDK) for Singer Taps.
 
 ## Installation
 

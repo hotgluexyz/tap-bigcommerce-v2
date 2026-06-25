@@ -33,7 +33,7 @@ class BigcommerceV2Stream(BigcommerceStream):
         if next_page_token:
             params["page"] = next_page_token
         if self.replication_key:
-            start_date = self.get_starting_time(context)
+            start_date = self.get_starting_time(context, is_inclusive=True)
             if start_date:
                 params["min_date_modified"] = start_date.isoformat()
         return params

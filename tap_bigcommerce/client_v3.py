@@ -38,8 +38,16 @@ class BigcommerceV3Stream(BigcommerceStream):
         if next_page_token:
             params["page"] = next_page_token
         if self.replication_key:
-            start_date = self.get_starting_time(context)
+            start_date = self.get_starting_time(context, is_inclusive=True)
             if start_date:
                 replication_key_lower_bound = self.replication_key + ":min"
                 params[replication_key_lower_bound] = start_date.strftime('%Y-%m-%dT%H:%M:%S+00:00')
         return params
+
+    def get_estimated_record_count(self) -> int:
+        prepared_request = self.prepare_request(
+            None, next_page_token=None
+        )
+        resp = self.request_decorator(self._request)(prepared_request, {})
+        total_count = resp.json().get("meta", {}).get("pagination", {}).get("total")
+        return total_count
