@@ -10,9 +10,12 @@ keywords = [
 license = "Apache 2.0"
 
 [tool.poetry.dependencies]
-python = "<3.11,>=3.7.1"
+python = "<3.15,>=3.7.1"
 requests = "^2.25.1"
-hotglue-singer-sdk = "^v1.0.35"
+hotglue-singer-sdk = [
+    { version = "^1.0.35", python = "<3.14" },
+    { version = "^1.0.51", python = ">=3.14" },
+]
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"

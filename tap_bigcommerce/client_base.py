@@ -49,7 +49,13 @@ class BigcommerceStream(RESTStream):
 
     def parse_response(self, response: requests.Response) -> Iterable[dict]:
         if response.status_code != 204:
-            yield from extract_jsonpath(self.records_jsonpath, input=response.json())
+            payload = response.json()
+            # Some endpoints return one object instead of an array. Newer
+            # jsonpath-ng versions expand $[*] into that object's values.
+            if self.records_jsonpath == "$[*]" and isinstance(payload, dict):
+                yield payload
+            else:
+                yield from extract_jsonpath(self.records_jsonpath, input=payload)
 
     @staticmethod
     def _url_encode(val) -> str:
