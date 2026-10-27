@@ -351,7 +351,7 @@ def get_order_lines_schema():
         th.Property("external_id", th.StringType),
         th.Property("fulfillment_source", th.StringType),
         th.Property("brand", th.StringType),
-        th.Property("gift_certificate_id", th.StringType),
+        th.Property("gift_certificate_id", th.IntegerType),
         th.Property("applied_discounts", th.ArrayType(
             th.ObjectType(
                 th.Property("id", th.StringType),
